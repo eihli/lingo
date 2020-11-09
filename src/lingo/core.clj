@@ -1,6 +1,6 @@
 (ns lingo.core
-  (:use [lingo.features :only [feature]]
-        [clojure.core.match :only [match]])
+  (:require [lingo.features :refer [feature]]
+            [clojure.core.match :refer [match]])
   (:import (simplenlg.framework NLGFactory CoordinatedPhraseElement)
            (simplenlg.lexicon Lexicon XMLLexicon)
            (simplenlg.realiser.english Realiser)))
@@ -15,26 +15,27 @@
   ([phrase object object-ref]
    (let [factory (.getFactory object)]
      (match [(:* phrase)]
-       [[:pre modifier]]   (.addPreModifier   object modifier)
-       [[:front modifier]] (.addFrontModifier object modifier)
-       [[:post  modifier]] (.addPostModifier  object modifier)
-       [([& modifiers] :seq)]
-         (doseq [modifier modifiers]
-           (modify! {:* modifier} object object-ref))
-       [{:complement complement}] (.addComplement object complement)
-       [{:> (:or :verb :noun :subject :object :clause)}]
-         (if (instance? CoordinatedPhraseElement @object-ref)
-           (.addCoordinate @object-ref (gen factory (:* phrase)))
-           (let [cont (gen factory (:* phrase))
-                 phrase (.createCoordinatedPhrase factory object cont)]
-             (reset! object-ref phrase)))
-       [{:feature [kind ident]}]
-         (let [[feature spec] (feature kind ident)]
-           (.setFeature @object-ref feature spec))
-       [:plural]
-         (let [[feature spec] (feature :plural :numbers)]
-           (.setFeature @object-ref feature spec))
-       [modifier] (.addModifier object modifier))
+            [[:pre modifier]]   (.addPreModifier   object modifier)
+            [[:front modifier]] (.addFrontModifier object modifier)
+            [[:post  modifier]] (.addPostModifier  object modifier)
+            [[:specifier specifier]] (.setSpecifier object specifier)
+            [([& modifiers] :seq)]
+            (doseq [modifier modifiers]
+              (modify! {:* modifier} object object-ref))
+            [{:complement complement}] (.addComplement object complement)
+            [{:> (:or :verb :noun :subject :object :clause)}]
+            (if (instance? CoordinatedPhraseElement @object-ref)
+              (.addCoordinate @object-ref (gen factory (:* phrase)))
+              (let [cont (gen factory (:* phrase))
+                    phrase (.createCoordinatedPhrase factory object cont)]
+                (reset! object-ref phrase)))
+            [{:feature [kind ident]}]
+            (let [[feature spec] (feature kind ident)]
+              (.setFeature @object-ref feature spec))
+            [:plural]
+            (let [[feature spec] (feature :plural :numbers)]
+              (.setFeature @object-ref feature spec))
+            [modifier] (.addModifier object modifier))
      @object-ref)))
 
 (defmulti modify (fn [phrase object] (:> phrase)))

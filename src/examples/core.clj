@@ -1,5 +1,5 @@
 (ns examples.core
-  (:use [lingo.core :only [make-gen]]))
+  (:require [lingo.core :refer [make-gen]]))
 
 ;; Lingo's pieces comprise Clojure data structures. Maps are the
 ;; primary structure used to express each part of speech we're
